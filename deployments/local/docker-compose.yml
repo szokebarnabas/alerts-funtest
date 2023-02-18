@@ -1,0 +1,44 @@
+version: '3.7'
+
+volumes:
+  prometheus_data: {}
+
+services:
+  prometheus:
+    hostname: prometheus
+    image: prom/prometheus:v2.40.1
+    #    network_mode: host
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-admin-api'
+    links:
+      - alertmanager:alertmanager
+    ports:
+      - 9090:9090
+    restart: always
+    networks:
+      - monitoring
+
+  pushgateway:
+    image: prom/pushgateway
+    ports:
+      - 9091:9091
+    networks:
+      - monitoring
+
+  alertmanager:
+    hostname: alertmanager
+    image: prom/alertmanager:v0.23.0
+    volumes:
+      - ./alertmanager/alertmanager.conf:/etc/alertmanager/alertmanager.conf
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.conf'
+    ports:
+      - 9093:9093
+
+networks:
+  monitoring:
+    driver: bridge
